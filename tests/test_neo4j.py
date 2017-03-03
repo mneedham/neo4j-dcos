@@ -25,7 +25,7 @@ def uninstall():
 def check_health():
     def fn():
         try:
-            return shakedown.get_service_tasks(SERVICE_NAME)
+            return shakedown.get_service_tasks("marathon")
         except dcos.errors.DCOSHTTPException:
             return []
 
