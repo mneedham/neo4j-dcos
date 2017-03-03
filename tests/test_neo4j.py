@@ -25,7 +25,7 @@ def uninstall():
 def check_health():
     def fn():
         try:
-            return shakedown.get_service_tasks("neo4j-core")
+            return shakedown.get_service_tasks(SERVICE_NAME)
         except dcos.errors.DCOSHTTPException:
             return []
 
