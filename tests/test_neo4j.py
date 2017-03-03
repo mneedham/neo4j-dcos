@@ -1,4 +1,7 @@
+import uuid
+
 from shakedown import *
+from dcos import *
 
 DCOS_URL = shakedown.run_dcos_command('config show core.dcos_url')[0].strip()
 PACKAGE_NAME = "neo4j"
@@ -8,13 +11,50 @@ DEFAULT_CLUSTER_SIZE = 3
 WAIT_TIME_IN_SECONDS = 60
 
 def test_install_neo4j():
-    uninstall()
-    install_package_and_wait(PACKAGE_NAME, wait_for_completion=True, service_name=SERVICE_NAME)
+    # spin up cluster - mesos.py
+
+    # install package,
+    # uninstall()
+    # install_package_and_wait(PACKAGE_NAME, wait_for_completion=True, service_name=SERVICE_NAME)
     assert package_installed(PACKAGE_NAME, service_name=SERVICE_NAME), 'Package failed to install'
 
     check_health()
 
-    uninstall()
+    # do basic queries
+    client = marathon.create_client()
+
+    app_id = uuid.uuid4().hex
+
+    app_json = {
+     "id": app_id,
+     "env": {
+       "NEO4J_BOLT_URL": "bolt://neo4j:dcos@core-neo4j.marathon.containerip.dcos.thisdcos.directory:7687",
+       "CONCURRENCY": "4",
+       "MAX_OPERATIONS": "5000"
+     },
+     "instances": 1,
+     "cpus": 1,
+     "mem": 1000,
+     "disk": 500,
+     "container": {
+       "docker": {
+         "image": "unterstein/neo4j-twitter-load",
+         "forcePullImage": True
+       }
+     }
+    }
+
+    client.add_app(app_json)
+
+    deployment_wait()
+
+    tasks = client.get_tasks(app_id)
+    assert len(tasks) == 1
+
+    # scale up one node
+    # done.
+
+    # uninstall()
 
 def uninstall():
     try:
